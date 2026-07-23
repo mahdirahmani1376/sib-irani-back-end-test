@@ -13,7 +13,4 @@ COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
 EXPOSE 9000
 
-COPY ./entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-CMD ["/entrypoint.sh"]
+CMD ["php-fpm"]
