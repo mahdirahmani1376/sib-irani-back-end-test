@@ -64,7 +64,10 @@ services:
 
 volumes:
   mysql:
+    name: sb-mysql-data
   redis:
+    name: sb-mysql-data
+    
 
 networks:
   app-network:
