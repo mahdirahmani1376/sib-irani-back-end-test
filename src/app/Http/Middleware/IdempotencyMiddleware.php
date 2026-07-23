@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Cache;
 
 class IdempotencyMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next,string $name='')
     {
         $idempotencyKey = $request->header('X-Idempotency-Key');
 
@@ -16,7 +16,7 @@ class IdempotencyMiddleware
             return $next($request);
         }
 
-        $existingTransaction = Cache::get("X-Idempotency-Key:{$request->user()->id}");
+        $existingTransaction = Cache::get("X-Idempotency-Key:{$name}:{$request->user()->id}");
 
         if ($existingTransaction) {
             return response()->json([
@@ -26,4 +26,5 @@ class IdempotencyMiddleware
 
         return $next($request);
     }
+
 }

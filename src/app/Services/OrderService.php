@@ -4,16 +4,12 @@ namespace App\Services;
 
 use App\Enums\AccountStatusEnum;
 use App\Enums\OrderStatusEnum;
-use App\Enums\TransactionStatusEnum;
 use App\Exceptions\OrderException;
-use App\Exceptions\ProductDoesNotHaveStockException;
 use App\Models\Account;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
-use App\Models\Transaction;
 use App\Models\User;
-use App\Services\Payment\PaymentInterface;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -54,7 +50,7 @@ class OrderService
                 'status' => AccountStatusEnum::RESERVED
             ]);
 
-            Cache::set("X-Idempotency-Key:{$user->id}",true,5);
+            Cache::set("X-Idempotency-Key:{add-items}:{$user->id}",true,5);
 
             $newAmount = $order->amount + $product->price;
             $order->update([
@@ -67,10 +63,5 @@ class OrderService
         }
 
         return $order;
-    }
-
-    public function proccessCallback(Order $order)
-    {
-
     }
 }
