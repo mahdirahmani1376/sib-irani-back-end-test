@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('user_id')->constrained();
-            $table->string('status')->default(\App\Enums\OrderStatusEnum::PENDING);
-            $table->unsignedInteger('amount');
+            $table->string('status')->default(\App\Enums\OrderStatusEnum::PENDING->value);
+            $table->unsignedBigInteger('amount')->default(0);
+            $table->index(['user_id', 'status']);
 
             $table->timestamps();
         });

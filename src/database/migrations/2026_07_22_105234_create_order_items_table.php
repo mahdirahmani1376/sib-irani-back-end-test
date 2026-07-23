@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('product_id')->constrained();
-            $table->foreignId('order_id')->constrained();
+            $table->foreignId('product_id')->index()->constrained();
+            $table->foreignId('order_id')->index()->constrained();
+            $table->unsignedBigInteger('price');
 
             $table->timestamps();
         });

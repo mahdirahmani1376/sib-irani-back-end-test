@@ -10,58 +10,55 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    public function addOrderItem(User $user,int $product_id)
+    public function addOrderItem(User $user, int $productId): Order
     {
-        $product = Product::find($product_id);
-        if (!$product->hasAvailableStock()) {
-            throw OrderException::causeOfUnavailableStock();
-        }
+        return DB::transaction(function () use ($user, $productId) {
+            $product = Product::query()->find($productId);
 
-        $order = Order::firstWhere([
-            'user_id' => $user->id,
-            'status' => OrderStatusEnum::PENDING
-        ]);
+            $account = Account::query()
+                ->where('product_id', $product->id)
+                ->where('status', AccountStatusEnum::AVAILABLE)
+                ->lockForUpdate()
+                ->first();
 
-        try {
-            DB::beginTransaction();
+            if (! $account) {
+                throw OrderException::causeOfUnavailableStock();
+            }
 
-            if (!$order) {
+
+            $order = Order::query()
+                ->where('user_id', $user->id)
+                ->where('status', OrderStatusEnum::PENDING)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $order) {
                 $order = Order::create([
                     'user_id' => $user->id,
-                    'status' => OrderStatusEnum::PENDING
+                    'status' => OrderStatusEnum::PENDING,
+                    'amount' => 0,
                 ]);
             }
 
             OrderItem::create([
                 'order_id' => $order->id,
-                'product_id' => $product_id
+                'product_id' => $product->id,
+                'price' => $product->price,
             ]);
-
-            $account = Account::firstWhere('status',AccountStatusEnum::AVAILABLE);
-            $account->lockForUpdate();
 
             $account->update([
                 'order_id' => $order->id,
-                'status' => AccountStatusEnum::RESERVED
+                'status' => AccountStatusEnum::RESERVED,
             ]);
 
-            Cache::set("X-Idempotency-Key:{add-items}:{$user->id}",true,5);
+            $order->increment('amount', $product->price);
 
-            $newAmount = $order->amount + $product->price;
-            $order->update([
-                'amount' => $newAmount
-            ]);
-
-            DB::commit();
-        } catch (\Throwable $e) {
-            DB::rollBack();
-        }
-
-        return $order;
+            return $order->fresh();
+        }, attempts: 3);
     }
+
 }

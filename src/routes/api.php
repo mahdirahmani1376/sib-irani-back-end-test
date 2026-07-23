@@ -9,10 +9,16 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::controller(OrderController::class)->middleware('auth:sanctum')->group(function () {
+Route::controller(OrderController::class)->group(function () {
     Route::post('/add-items', 'addOrderItem')
-        ->middleware(IdempotencyMiddleware::class . ':add-items');
+        ->middleware('auth:sanctum')
+        ->middleware(IdempotencyMiddleware::class)
+        ->name('order.add-item');
     Route::get('/orders/{orderId}/checkout', 'checkout')
-        ->middleware(IdempotencyMiddleware::class . ':checkout');
-    Route::get('/orders/{orderId}/callback', 'callback')->name('orders.callback');
+        ->middleware('auth:sanctum')
+        ->middleware(IdempotencyMiddleware::class)
+        ->name('orders.checkout');
+
+    Route::get('/orders/{orderId}/callback', 'callback')
+        ->name('orders.callback');
 });

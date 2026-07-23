@@ -14,11 +14,13 @@ return new class extends Migration
         Schema::create('accounts', function (Blueprint $table) {
             $table->id();
 
-            $table->json('credentials');
+            $table->text('credentials');
             $table->string('status')->default(\App\Enums\AccountStatusEnum::AVAILABLE->value);
 
             $table->foreignId('product_id')->constrained();
-            $table->foreignId('order_id')->nullable()->constrained();
+            $table->foreignId('order_id')->index()->nullable()->constrained();
+
+            $table->index(['product_id', 'status']);
 
             $table->timestamps();
         });

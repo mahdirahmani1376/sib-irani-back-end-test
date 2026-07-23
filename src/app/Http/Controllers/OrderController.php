@@ -8,7 +8,6 @@ use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Services\OrderService;
 use App\Services\Payment\PaymentInterface;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Response;
 
 class OrderController extends Controller
@@ -22,10 +21,11 @@ class OrderController extends Controller
 
     public function checkout(Order $order,PaymentInterface $paymentGateway)
     {
-        $id = auth()->id();
-        Cache::set("X-Idempotency-Key:{checkout}:{$id}",true,5);
+        $redirectUrl = $paymentGateway->getRedirectUrl($order);
 
-        return redirect($paymentGateway->getRedirectUrl($order));
+        return Response::json([
+            'redirect_url' => $redirectUrl
+        ]);
     }
 
     public function callback(PaymentGatewayCallbackRequest $request,Order $order,PaymentInterface $paymentGateway)

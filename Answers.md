@@ -11,6 +11,7 @@ there are multiple workarounds around this such as
 - proper indexing can surely improve performance alot
 - database connection pooling can help for very high concurrency like 2000 requests/sec 
 - If writes eventually become too high, partitioning or sharding could be considered
+- production payment flow would add a database uniqueness constraint/idempotency record for durable audit and recovery.
 ### Question-2
 ##### What do you consider the biggest security risk in this system, and how would you mitigate it?
 The most valuable asset in this system is the inventory of account credentials. Since these credentials must later be delivered to customers, they cannot be stored as hashes. I would encrypt them at rest, validate payment webhooks using HMAC signatures, and ensure all communication occurs over HTTPS. Together, these measures significantly reduce the risk of credential theft or fraudulent account delivery.

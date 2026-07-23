@@ -85,4 +85,5 @@ class OrderCreationTest extends TestCase
         $this->assertDatabaseCount('accounts', 1);
         $this->assertDatabaseHas('accounts', ['status' => AccountStatusEnum::RESERVED->value]);
     }
+
 }

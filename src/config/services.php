@@ -35,13 +35,13 @@ return [
         ],
     ],
     'payment' => [
-        'default_provider' => env('PAYMENT_PROVIDER'),
-        'saman' => [
-            'gateway_url' => 'localhost/saman-sandbox/init-payment',
-            'callback_url' => 'localhost/saman-sandbox/callback',
-            'name' => 'saman',
-            'secret' => env('SAMAN_PAYMENT_SECRET')
+            'default_provider' => env('PAYMENT_PROVIDER'),
+            'saman' => [
+                'gateway_url' => 'https://www.test.com/saman/gateway',
+                'callback_url' => 'https://www.test.com/saman/callback',
+                'name' => 'saman',
+                'secret' => env('SAMAN_PAYMENT_SECRET')
+            ]
         ]
-    ]
 
 ];

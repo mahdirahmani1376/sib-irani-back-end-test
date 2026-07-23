@@ -10,10 +10,10 @@ return new class extends Migration {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('order_id')->constrained();
-            $table->string('gateway-reference')->nullable();
+            $table->foreignId('order_id')->index()->constrained();
+            $table->string('gateway_reference')->nullable();
             $table->string('status');
-            $table->integer('amount');
+            $table->bigInteger('amount');
 
             $table->timestamps();
         });

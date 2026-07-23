@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
+    protected $fillable = [
+        'name',
+        'price',
+    ];
     public function hasAvailableStock(): bool
     {
         return $this->accounts()->where([
@@ -18,5 +22,10 @@ class Product extends Model
     public function accounts(): HasMany
     {
         return $this->hasMany(Account::class, 'product_id');
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class, 'product_id');
     }
 }
