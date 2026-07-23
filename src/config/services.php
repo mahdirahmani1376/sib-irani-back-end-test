@@ -34,5 +34,13 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'payment' => [
+        'default_provider' => env('PAYMENT_PROVIDER'),
+        'saman' => [
+            'gateway_url' => 'localhost/saman-sandbox',
+            'name' => 'saman',
+            'secret' => env('SAMAN_PAYMENT_SECRET')
+        ]
+    ]
 
 ];

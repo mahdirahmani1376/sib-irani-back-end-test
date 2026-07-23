@@ -29,7 +29,7 @@ src/_ide_helper.php
 src/package.xml
 redis/
 mysql/
-.env
+.env.docker.example
 *.sql.gz
 *.sql
 node/node_modules
@@ -37,3 +37,4 @@ node/node_modules
 /src/supervisord.pid
 /.env.infra
 /todo.txt
+/.env
