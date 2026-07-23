@@ -11,9 +11,8 @@ return new class extends Migration {
             $table->id();
 
             $table->foreignId('order_id')->constrained();
-            $table->string('gateway-reference');
+            $table->string('gateway-reference')->nullable();
             $table->string('status');
-            $table->timestamp('paid_at');
             $table->integer('amount');
 
             $table->timestamps();
