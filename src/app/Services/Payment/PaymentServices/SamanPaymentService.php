@@ -5,7 +5,6 @@ namespace App\Services\Payment\PaymentServices;
 use App\Enums\OrderStatusEnum;
 use App\Enums\TransactionStatusEnum;
 use App\Events\OrderPaidEvent;
-use App\Exceptions\TransactionException;
 use App\Models\Order;
 use App\Models\Transaction;
 use App\Services\Payment\AbstractPaymentService;
@@ -35,17 +34,26 @@ class SamanPaymentService extends AbstractPaymentService implements PaymentInter
             'secret' => config('services.payment.saman.secret')
         ];
 
-        $response = Http::asJson()->post(config('services.payment.saman.gateway_url'), $payload);
+        try {
+            $response = Http::asJson()->post(config('services.payment.saman.gateway_url'), $payload);
 
-        if ($response->ok()) {
-            return $response->json('redirect_url');
-        } else {
-            $transaction->update([
-                'status' => TransactionStatusEnum::FAILED
+            if ($response->ok()) {
+                return $response->json('redirect_url');
+            } else {
+                $transaction->update([
+                    'status' => TransactionStatusEnum::FAILED
+                ]);
+            }
+        } catch (Exception $e) {
+            Log::error('payment interface error',[
+                'providers' => 'saman',
+                'type' => 'redirect url error',
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
             ]);
-
-            throw TransactionException::causeOfGateWayError();
         }
+
+        return false;
     }
 
     public function rules(): array

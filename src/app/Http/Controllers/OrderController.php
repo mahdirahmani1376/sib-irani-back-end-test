@@ -21,9 +21,17 @@ class OrderController extends Controller
     public function checkout(Order $order,PaymentInterface $paymentGateway)
     {
         $redirectUrl = $paymentGateway->getRedirectUrl($order);
+        if ($redirectUrl) {
+            return Response::json([
+                'redirect_url' => $redirectUrl,
+                'success' => true
+            ]);
+        } else {
+            return Response::json([
+                'message' => 'failed to get redirect url',
+                'success' => false
+            ]);
+        }
 
-        return Response::json([
-            'redirect_url' => $redirectUrl
-        ]);
     }
 }
