@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->string('gateway-reference');
             $table->string('status');
             $table->timestamp('paid_at');
+            $table->integer('amount');
 
             $table->timestamps();
         });

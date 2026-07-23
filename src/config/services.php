@@ -37,7 +37,8 @@ return [
     'payment' => [
         'default_provider' => env('PAYMENT_PROVIDER'),
         'saman' => [
-            'gateway_url' => 'localhost/saman-sandbox',
+            'gateway_url' => 'localhost/saman-sandbox/init-payment',
+            'callback_url' => 'localhost/saman-sandbox/callback',
             'name' => 'saman',
             'secret' => env('SAMAN_PAYMENT_SECRET')
         ]

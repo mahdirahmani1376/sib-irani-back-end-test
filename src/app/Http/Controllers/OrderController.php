@@ -24,10 +24,21 @@ class OrderController extends Controller
         return redirect($paymentGateway->getRedirectUrl($order));
     }
 
-    public function callback(PaymentGatewayCallbackRequest $request,Order $order,PaymentInterface $paymentGateway,OrderService $orderService)
+    public function callback(PaymentGatewayCallbackRequest $request,Order $order,PaymentInterface $paymentGateway)
     {
-        $result = $paymentGateway->acknowledgeSuccess($order);
+        $result = $paymentGateway->processCallbackRequest($order,$request->validated());
+        if ($result) {
+            return Response::json([
+                'status' => 'success',
+                'message' => 'payment successfully made'
+            ]);
+        } else {
+            return Response::json([
+                'status' => 'failed',
+                'message' => 'payment failed'
+            ]);
+        }
 
-        return $result;
+
     }
 }

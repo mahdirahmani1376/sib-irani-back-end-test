@@ -2,14 +2,16 @@
 
 namespace App\Events;
 
-use Illuminate\Bus\Queueable;
+use App\Models\Order;
 use Illuminate\Foundation\Events\Dispatchable;
 
 class OrderPaidEvent
 {
-    use Dispatchable,Queueable;
+    use Dispatchable;
 
-    public function __construct()
+    public function __construct(
+        public Order $order
+    )
     {
     }
 }

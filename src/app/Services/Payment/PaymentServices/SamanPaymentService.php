@@ -4,7 +4,7 @@ namespace App\Services\Payment\PaymentServices;
 
 use App\Enums\OrderStatusEnum;
 use App\Enums\TransactionStatusEnum;
-use App\Exceptions\OrderException;
+use App\Events\OrderPaidEvent;
 use App\Exceptions\TransactionException;
 use App\Models\Order;
 use App\Models\Transaction;
@@ -20,6 +20,7 @@ class SamanPaymentService extends AbstractPaymentService implements PaymentInter
             'status' => TransactionStatusEnum::PENDING,
             'order_id' => $order->id,
             'gateway' => config('services.payment.saman.name'),
+            'amount' => -$order->amount
         ]);
 
         $payload = [
@@ -29,7 +30,7 @@ class SamanPaymentService extends AbstractPaymentService implements PaymentInter
             'secret' => config('services.payment.saman.secret')
         ];
 
-        $response = Http::asJson()->post(config('services.payment.saman.gateway_url'),$payload);
+        $response = Http::asJson()->post(config('services.payment.saman.gateway_url'), $payload);
 
         if ($response->ok()) {
             return $response->json('redirect_url');
@@ -38,36 +39,51 @@ class SamanPaymentService extends AbstractPaymentService implements PaymentInter
         }
     }
 
-    public function callback()
+    public function processCallbackRequest(Order $order, array $data)
     {
-        // TODO: Implement webhook() method.
-    }
-
-    public function acknowledgeSuccess(Order $order,array $data)
-    {
-        $transaction = Transaction::firstWhere('id',$data['ref_id']);
+        $transaction = Transaction::firstWhere('id', $data['ref_id']);
 
         if ($data['success']) {
-            $transaction->update(['status' => TransactionStatusEnum::PAID]);
+            $transaction->update([
+                'status' => TransactionStatusEnum::PAID,
+                'paid_at' => now()
+                ]);
+
             $order->update([
                 'status' => OrderStatusEnum::PAID
             ]);
 
+            $response = Http::asJson()->post(config('services.payment.saman.callback_url'), [
+                'ref_if' => $transaction->id
+            ]);
+
+            if ($response->ok()) {
+
+                OrderPaidEvent::dispatch($order);
+
+                return true;
+            } else {
+                return false;
+            }
 
         } else {
-            $transaction->update(['status' => TransactionStatusEnum::FAILED]);
+            $transaction->update([
+                'status' => TransactionStatusEnum::FAILED
+            ]);
+
             $order->update([
                 'status' => OrderStatusEnum::FAILED
             ]);
-        }
 
+            Transaction::create([
+                'order_id' => $order->id,
+                'status' => OrderStatusEnum::REFUNDED,
+                'gateway' => 'saman',
+                'paid_at' => now(),
+                'amount' => $order->amount
+            ]);
 
-        $response = Http::asJson()->post(config('services.payment.saman.gateway_url'),$payload);
-
-        if ($response->ok()) {
-            return $response->json('redirect_url');
-        } else {
-            throw TransactionException::causeOfGateWayError();
+            return false;
         }
     }
 }
