@@ -14,11 +14,12 @@ Route::controller(OrderController::class)->group(function () {
         ->middleware('auth:sanctum')
         ->middleware(IdempotencyMiddleware::class)
         ->name('order.add-item');
-    Route::get('/orders/{orderId}/checkout', 'checkout')
+    Route::get('/orders/{order}/checkout', 'checkout')
         ->middleware('auth:sanctum')
         ->middleware(IdempotencyMiddleware::class)
+        ->middleware('can:checkout,order')
         ->name('orders.checkout');
 
-    Route::get('/orders/{orderId}/callback', 'callback')
+    Route::get('/orders/{order}/callback', 'callback')
         ->name('orders.callback');
 });

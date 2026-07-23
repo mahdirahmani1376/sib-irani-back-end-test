@@ -18,12 +18,12 @@ class OrderCreationTest extends TestCase
     public function test_customer_can_add_an_in_stock_product_to_an_order(): void
     {
         $customer = User::factory()->create();
-        $product = ProductFactory::new()->create(['price' => 125_000]);
+        $product = ProductFactory::new()->create(['price' => 125000]);
         $account = AccountFactory::new()->create(['product_id' => $product->id]);
 
         Sanctum::actingAs($customer);
 
-        $response = $this->postJson('/api/add-items', [
+        $response = $this->postJson(route('order.add-item'), [
             'product_id' => $product->id,
         ], ['X-Idempotency-Key' => 'add-item-001']);
 
@@ -31,7 +31,7 @@ class OrderCreationTest extends TestCase
         $this->assertDatabaseHas('orders', [
             'user_id' => $customer->id,
             'status' => OrderStatusEnum::PENDING->value,
-            'amount' => 125_000,
+            'amount' => 125000,
         ]);
         $this->assertDatabaseHas('order_items', ['product_id' => $product->id]);
         $this->assertDatabaseHas('accounts', [

@@ -35,6 +35,10 @@ class SamanPaymentService extends AbstractPaymentService implements PaymentInter
         if ($response->ok()) {
             return $response->json('redirect_url');
         } else {
+            $transaction->update([
+                'status' => TransactionStatusEnum::FAILED
+            ]);
+
             throw TransactionException::causeOfGateWayError();
         }
     }
