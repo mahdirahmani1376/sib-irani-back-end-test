@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Middleware\IdempotencyMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -19,7 +20,7 @@ Route::controller(OrderController::class)->group(function () {
         ->middleware(IdempotencyMiddleware::class)
         ->middleware('can:checkout,order')
         ->name('orders.checkout');
-
-    Route::get('/orders/{order}/callback', 'callback')
-        ->name('orders.callback');
 });
+
+Route::post('/transactions/callback', [TransactionController::class,'callback'])
+    ->name('transactions.callback');

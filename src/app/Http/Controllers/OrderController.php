@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AddOrderItemRequest;
-use App\Http\Requests\PaymentGatewayCallbackRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Services\OrderService;
@@ -26,23 +25,5 @@ class OrderController extends Controller
         return Response::json([
             'redirect_url' => $redirectUrl
         ]);
-    }
-
-    public function callback(PaymentGatewayCallbackRequest $request,Order $order,PaymentInterface $paymentGateway)
-    {
-        $result = $paymentGateway->processCallbackRequest($order,$request->validated());
-        if ($result) {
-            return Response::json([
-                'status' => 'success',
-                'message' => 'payment successfully made'
-            ]);
-        } else {
-            return Response::json([
-                'status' => 'failed',
-                'message' => 'payment failed'
-            ]);
-        }
-
-
     }
 }

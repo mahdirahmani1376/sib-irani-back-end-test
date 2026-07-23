@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\TransactionStatusEnum;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
@@ -17,4 +18,9 @@ class Transaction extends Model
     protected $casts = [
       'status' => TransactionStatusEnum::class
     ];
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
 }

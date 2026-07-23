@@ -8,5 +8,8 @@ interface PaymentInterface
 {
     public function getRedirectUrl(Order $order);
 
-    public function processCallbackRequest(Order $order, array $data);
+    public function processCallbackRequest(array $data);
+
+    public function rules(): array;
+
 }

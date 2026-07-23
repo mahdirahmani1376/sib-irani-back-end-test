@@ -2,27 +2,16 @@
 
 namespace App\Http\Requests;
 
+use App\Services\Payment\PaymentInterface;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PaymentGatewayCallbackRequest extends FormRequest
 {
     public function rules(): array
     {
-        $signature = $this->header('X-Signature');
+        $rules = [];
 
-        $expected = hash_hmac(
-            'sha256',
-            $this->getContent(),
-            config('services.payment.saman.secret')
-        );
-
-        if (! hash_equals($expected, $signature)) {
-            abort(401);
-        }
-
-        return [
-            'ref_id' => ['required']
-        ];
+        return array_merge(app(PaymentInterface::class)->rules(),$rules);
     }
 
     public function authorize(): bool

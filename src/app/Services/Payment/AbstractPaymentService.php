@@ -2,14 +2,14 @@
 
 namespace App\Services\Payment;
 
-use App\Models\Order;
+use App\Models\Transaction;
 
 abstract class AbstractPaymentService
 {
-    public function getCallbackUrlForOrder(Order $order): string
+    public function getCallbackUrlForOrder(Transaction $transaction): string
     {
-        return route('orders.callback',[
-            'order' => $order->id
+        return route('transactions.callback',[
+            'gateway_reference' => $transaction->gateway_reference
         ]);
     }
 }

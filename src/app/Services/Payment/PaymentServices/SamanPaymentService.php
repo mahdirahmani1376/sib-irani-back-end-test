@@ -10,7 +10,10 @@ use App\Models\Order;
 use App\Models\Transaction;
 use App\Services\Payment\AbstractPaymentService;
 use App\Services\Payment\PaymentInterface;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class SamanPaymentService extends AbstractPaymentService implements PaymentInterface
 {
@@ -19,14 +22,14 @@ class SamanPaymentService extends AbstractPaymentService implements PaymentInter
         $transaction = Transaction::create([
             'status' => TransactionStatusEnum::PENDING,
             'order_id' => $order->id,
-            'gateway' => config('services.payment.saman.name'),
+            'gateway_reference' => Str::uuid()->toString(),
             'amount' => -$order->amount
         ]);
 
         $payload = [
             'amount' => $order->amount,
-            'ref_id' => $transaction->id,
-            'callback_url' => $this->getCallbackUrlForOrder($order),
+            'ref_id' => $transaction->gateway_reference,
+            'callback_url' => $this->getCallbackUrlForOrder($transaction),
             'secret' => config('services.payment.saman.secret')
         ];
 
@@ -43,34 +46,55 @@ class SamanPaymentService extends AbstractPaymentService implements PaymentInter
         }
     }
 
-    public function processCallbackRequest(Order $order, array $data)
+    public function rules(): array
     {
-        $transaction = Transaction::firstWhere('id', $data['ref_id']);
+        return [
+            'ref_id' => ['required',Rule::exists('transactions','gateway_reference')
+                ->where('status',TransactionStatusEnum::PENDING)
+                ->where('gateway_reference',request('ref_id'))
+            ],
+            'success' => ['required']
+        ];
+    }
+
+    public function processCallbackRequest(array $data)
+    {
+        $transaction = Transaction::where([
+            'gateway_reference' => $data['ref_id'],
+            'status' => TransactionStatusEnum::PENDING
+                ])
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        $order = $transaction->order;
 
         if ($data['success']) {
-            $transaction->update([
-                'status' => TransactionStatusEnum::PAID,
-                'paid_at' => now()
+            $response = retry(3, function () use ($transaction) {
+                return Http::asJson()->post(config('services.payment.saman.callback_url'), [
+                    'ref_if' => $transaction->gateway_reference
                 ]);
-
-            $order->update([
-                'status' => OrderStatusEnum::PAID
-            ]);
-
-            $response = Http::asJson()->post(config('services.payment.saman.callback_url'), [
-                'ref_if' => $transaction->id
-            ]);
+            }, 5);
 
             if ($response->ok()) {
+                DB::transaction(function () use ($order, $transaction) {
+                    $transaction->update([
+                        'status' => TransactionStatusEnum::PAID,
+                        'paid_at' => now()
+                    ]);
+
+                    $order->update([
+                        'status' => OrderStatusEnum::PAID
+                    ]);
+
+                }, 2);
 
                 OrderPaidEvent::dispatch($order);
 
                 return true;
-            } else {
-                return false;
             }
+        }
 
-        } else {
+        DB::transaction(function () use ($order, $transaction) {
             $transaction->update([
                 'status' => TransactionStatusEnum::FAILED
             ]);
@@ -82,12 +106,12 @@ class SamanPaymentService extends AbstractPaymentService implements PaymentInter
             Transaction::create([
                 'order_id' => $order->id,
                 'status' => OrderStatusEnum::REFUNDED,
-                'gateway' => 'saman',
-                'paid_at' => now(),
+                'gateway_reference' => null,
                 'amount' => $order->amount
             ]);
+        }, 2);
 
-            return false;
-        }
+
+        return false;
     }
 }

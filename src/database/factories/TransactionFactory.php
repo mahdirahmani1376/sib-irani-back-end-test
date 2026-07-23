@@ -15,10 +15,9 @@ class TransactionFactory extends Factory
     {
         return [
             'order_id' => OrderFactory::new(),
-            'gateway' => 'saman',
+            'gateway_reference' => 'saman',
             'status' => TransactionStatusEnum::PENDING->value,
-            'amount' => -fake()->numberBetween(10_000, 500_000),
-            'paid_at' => null,
+            'amount' => -fake()->numberBetween(10000, 500000),
         ];
     }
 }
