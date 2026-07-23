@@ -10,10 +10,12 @@ use App\Models\Order;
 use App\Models\Transaction;
 use App\Services\Payment\AbstractPaymentService;
 use App\Services\Payment\PaymentInterface;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Log;
 
 class SamanPaymentService extends AbstractPaymentService implements PaymentInterface
 {
@@ -69,13 +71,24 @@ class SamanPaymentService extends AbstractPaymentService implements PaymentInter
         $order = $transaction->order;
 
         if ($data['success']) {
-            $response = retry(3, function () use ($transaction) {
-                return Http::asJson()->post(config('services.payment.saman.callback_url'), [
-                    'ref_if' => $transaction->gateway_reference
-                ]);
-            }, 5);
 
-            if ($response->ok()) {
+            $response = false;
+            try {
+                $response = retry(3, function () use ($transaction) {
+                    return Http::asJson()->post(config('services.payment.saman.callback_url'), [
+                        'ref_if' => $transaction->gateway_reference
+                    ]);
+                }, 5);
+            } catch (Exception $e) {
+                Log::error('payment interface error',[
+                    'providers' => 'saman',
+                    'type' => 'callback url error',
+                    'error' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                ]);
+            }
+
+            if ($response?->ok()) {
                 DB::transaction(function () use ($order, $transaction) {
                     $transaction->update([
                         'status' => TransactionStatusEnum::PAID,
